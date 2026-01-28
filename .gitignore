@@ -1,0 +1,30 @@
+# Virtual environment
+venv/
+.venv/
+
+# Claude Code
+.claude/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.class
+
+# YOLO training outputs
+runs/
+model/
+
+# Pre-trained weights (large files)
+*.pt
+
+# Dataset (users should create their own)
+dataset/
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
