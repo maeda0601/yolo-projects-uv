@@ -1,5 +1,6 @@
 names:
-  0: object
+  0: class1
+  1: class2
 path: ./dataset
 train: images/train
 val: images/val
