@@ -330,6 +330,8 @@ class YOLOGuiApp:
         self.annotation_canvas.bind('<B1-Motion>', self.on_canvas_drag)
         self.annotation_canvas.bind('<ButtonRelease-1>', self.on_canvas_release)
         self.annotation_canvas.bind('<Button-3>', self.on_canvas_right_click)
+        self.annotation_canvas.bind('<Motion>', self.on_canvas_motion)
+        self.annotation_canvas.bind('<Leave>', self.on_canvas_leave)
 
         # 右側：コントロール
         right_frame = ttk.Frame(tab, width=200)
@@ -518,6 +520,33 @@ class YOLOGuiApp:
                 # クラスラベル
                 cls_name = self.classes[class_id] if class_id < len(self.classes) else f"class_{class_id}"
                 self.annotation_canvas.create_text(x1+2, y1-10, text=cls_name, fill=color, anchor=tk.W)
+
+    def on_canvas_motion(self, event):
+        """マウス移動時にクロスヘアガイドを表示"""
+        self.annotation_canvas.delete("guide")
+
+        if self.current_image is None or self.drawing:
+            return
+
+        # 画像領域内のみガイドを表示
+        if not (self.img_offset_x <= event.x <= self.img_offset_x + self.display_w and
+                self.img_offset_y <= event.y <= self.img_offset_y + self.display_h):
+            return
+
+        # 垂直線
+        self.annotation_canvas.create_line(
+            event.x, self.img_offset_y, event.x, self.img_offset_y + self.display_h,
+            fill='#00ff00', width=1, dash=(4, 4), tags="guide"
+        )
+        # 水平線
+        self.annotation_canvas.create_line(
+            self.img_offset_x, event.y, self.img_offset_x + self.display_w, event.y,
+            fill='#00ff00', width=1, dash=(4, 4), tags="guide"
+        )
+
+    def on_canvas_leave(self, event):
+        """キャンバスからマウスが離れた時にガイドを消す"""
+        self.annotation_canvas.delete("guide")
 
     def on_canvas_click(self, event):
         """キャンバスクリック時"""
@@ -735,7 +764,7 @@ class YOLOGuiApp:
 
         # デバイス
         ttk.Label(left_frame, text="デバイス:").pack(anchor=tk.W, padx=5, pady=2)
-        self.device_var = tk.StringVar(value="0")
+        self.device_var = tk.StringVar(value="cpu")
         device_combo = ttk.Combobox(left_frame, textvariable=self.device_var,
                                     values=["0", "cpu"])
         device_combo.pack(fill=tk.X, padx=5, pady=2)
@@ -837,7 +866,7 @@ class YOLOGuiApp:
                 'epochs': int(self.epochs_var.get()),
                 'batch': int(self.batch_var.get()),
                 'imgsz': int(self.imgsz_var.get()),
-                'project': self.project_var.get(),
+                'project': str(self.model_path),
                 'name': self.exp_name_var.get(),
                 'device': self.device_var.get() if self.device_var.get() != "cpu" else "cpu",
                 'verbose': True

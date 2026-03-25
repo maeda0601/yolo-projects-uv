@@ -10,7 +10,6 @@ from PIL import Image, ImageTk
 import os
 from pathlib import Path
 import yaml
-import time
 
 # ultralyticsのインポート
 try:
@@ -44,20 +43,6 @@ class CameraDetectionApp:
         self.confidence_threshold = 0.5
         self.detection_enabled = True
 
-        # 異常検知設定
-        # 正常状態: measure=2個, scissors=2個, pallet-gauge/normal-gauge/caliper/digita majer=各1個
-        self.normal_state = {
-            "measure": 2,        # index 2
-            "scissors": 2,       # index 3
-            "pallet-gauge": 1,   # index 4
-            "normal-gauge": 1,   # index 5
-            "caliper": 1,        # index 6
-            "digita majer": 1,   # index 7
-        }
-        self.abnormal_start_time = None  # 異常状態の開始時刻
-        self.alert_active = False        # アラート表示中かどうか
-        self.ALERT_DURATION = 5.0       # 異常が続くと警告する秒数
-
         # UIセットアップ
         self.setup_ui()
 
@@ -85,28 +70,6 @@ class CameraDetectionApp:
         # カメラキャンバス
         self.camera_canvas = tk.Canvas(left_frame, width=800, height=600, bg='black')
         self.camera_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        # 正常状態ラベル（常時表示、正常時は緑）
-        self.normal_label = tk.Label(
-            left_frame,
-            text="正常: メジャー2個、ハサミ2個、ピンゲージ各1個、デジタルメジャー1個、ノギス1個検出中",
-            font=("Arial", 12, "bold"),
-            fg="white",
-            bg="green",
-            pady=6,
-        )
-        self.normal_label.pack(fill=tk.X, padx=5, pady=2)
-
-        # 異常アラートラベル（異常時のみ表示）
-        self.alert_label = tk.Label(
-            left_frame,
-            text="",
-            font=("Arial", 14, "bold"),
-            fg="white",
-            bg="red",
-            pady=6,
-        )
-        # 通常は非表示、異常時にpack()
 
         # 右側：コントロール
         right_frame = ttk.Frame(main_frame, width=250)
@@ -286,12 +249,6 @@ class CameraDetectionApp:
         self.camera_start_btn.config(state=tk.NORMAL)
         self.camera_stop_btn.config(state=tk.DISABLED)
         self.camera_canvas.delete("all")
-        # 異常状態タイマーとアラートをリセット、正常ラベルを復元
-        self.abnormal_start_time = None
-        if self.alert_active:
-            self.alert_active = False
-            self.alert_label.pack_forget()
-            self.normal_label.pack(fill=tk.X, padx=5, pady=2)
 
     def update_camera(self):
         """カメラフレームを更新"""
@@ -384,57 +341,8 @@ class CameraDetectionApp:
         ]
         return colors[class_id % len(colors)]
 
-    def is_normal_state(self, detections):
-        """
-        検出結果が正常状態かどうかを判定する。
-        正常状態: measure=2個, scissors=2個, pallet-gauge/normal-gauge/caliper/digita majer=各1個
-        """
-        # クラスごとの検出数をカウント
-        counts = {}
-        for det in detections:
-            cls = det['class']
-            counts[cls] = counts.get(cls, 0) + 1
-
-        return counts == self.normal_state
-
-    def check_anomaly(self, detections):
-        """
-        異常状態が5秒連続で続いた場合にアラートを表示する。
-        正常状態に戻ったらアラートを消す。
-        """
-        now = time.time()
-
-        if self.is_normal_state(detections):
-            # 正常状態: タイマーリセット、アラート解除、正常ラベル表示
-            self.abnormal_start_time = None
-            if self.alert_active:
-                self.alert_active = False
-                self.alert_label.pack_forget()
-                self.normal_label.pack(fill=tk.X, padx=5, pady=2)
-        else:
-            # 異常状態: タイマー開始または継続
-            if self.abnormal_start_time is None:
-                self.abnormal_start_time = now
-            elapsed = now - self.abnormal_start_time
-            if elapsed >= self.ALERT_DURATION and not self.alert_active:
-                # 5秒以上異常が続いたらアラート表示、正常ラベルを非表示
-                self.alert_active = True
-                self.normal_label.pack_forget()
-                self.alert_label.config(
-                    text=f"⚠ 異常検知: 検出状態が正常ではありません ({elapsed:.0f}秒経過)"
-                )
-                self.alert_label.pack(fill=tk.X, padx=5, pady=2)
-            elif elapsed >= self.ALERT_DURATION and self.alert_active:
-                # アラート表示中は経過秒数を更新
-                self.alert_label.config(
-                    text=f"⚠ 異常検知: 検出状態が正常ではありません ({elapsed:.0f}秒経過)"
-                )
-
     def update_results(self, detections):
         """検出結果を更新"""
-        # 異常状態チェック
-        self.check_anomaly(detections)
-
         self.result_text.delete(1.0, tk.END)
 
         if not detections:

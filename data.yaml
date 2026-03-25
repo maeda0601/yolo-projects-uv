@@ -1,6 +1,12 @@
 names:
-  0: class1
+  0: SidePlate
   1: class2
+  2: measure
+  3: scissors
+  4: pallet-gauge
+  5: normal-gauge
+  6: caliper
+  7: digita majer
 path: ./dataset
 train: images/train
 val: images/val

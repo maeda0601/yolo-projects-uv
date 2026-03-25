@@ -3,8 +3,8 @@ import cv2
 import time
 
 interval = 1.0  # 秒
-model = YOLO("yolov8n.pt")
-
+model = YOLO("demo\yolov8n.pt")
+print(model.ckpt_path)
 cap = cv2.VideoCapture(0)
 
 # 👇 ここで解像度を変更
