@@ -24,28 +24,26 @@ git clone https://github.com/your-username/yolo-projects.git
 cd yolo-projects
 ```
 
-### 2. 仮想環境の作成（推奨）
+### 2. 依存パッケージのインストール（uv使用）
+
+[uv](https://docs.astral.sh/uv/) を使用した環境構築を推奨します。
 
 ```bash
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# macOS / Linux
-source venv/bin/activate
+uv sync
 ```
 
-### 3. 必要なライブラリのインストール
+仮想環境（`.venv/`）の作成とパッケージのインストールが自動で行われます。
+
+> **uvがインストールされていない場合:**
+> ```bash
+> # Windows (PowerShell)
+> powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+> ```
+
+### 3. アプリケーションの起動
 
 ```bash
-pip install -r requirements.txt
-```
-
-### 4. アプリケーションの起動
-
-```bash
-python gui_app.py
+uv run python gui_app.py
 ```
 
 ## 使い方
@@ -139,23 +137,41 @@ YOLOv8モデルの学習を実行します。
 ## ディレクトリ構造
 
 ```
-yolo-projects/
-├── gui_app.py          # メインアプリケーション
-├── requirements.txt    # 必要なライブラリ
-├── data.yaml          # データセット設定ファイル（自動生成）
-├── dataset/           # データセットフォルダ（自動生成）
+yolo-projects-uv/
+├── gui_app.py          # 画像収集・アノテーション・学習GUIアプリ
+├── camera_app.py       # リアルタイム物体検出・異常検知アプリ
+├── pyproject.toml      # プロジェクト設定・依存パッケージ定義（uv）
+├── uv.lock             # 依存パッケージのバージョン固定ファイル
+├── requirements.txt    # 旧依存ファイル（互換参照用）
+├── data.yaml           # データセット設定ファイル（自動生成）
+├── demo/               # サンプルスクリプト
+│   ├── demo.py         # 最小構成の検出デモ
+│   └── camera_app.py   # camera_app のデモ用コピー
+├── dataset/            # データセットフォルダ（自動生成）
 │   ├── images/
-│   │   ├── train/     # 学習用画像
-│   │   └── val/       # 検証用画像
+│   │   ├── train/      # 学習用画像
+│   │   └── val/        # 検証用画像
 │   └── labels/
-│       ├── train/     # 学習用ラベル（YOLO形式）
-│       └── val/       # 検証用ラベル（YOLO形式）
-└── model/             # 学習結果の保存先（自動生成）
+│       ├── train/      # 学習用ラベル（YOLO形式）
+│       └── val/        # 検証用ラベル（YOLO形式）
+└── model/              # 学習結果の保存先（自動生成）
     └── exp/
         └── weights/
-            ├── best.pt    # 最良モデル
-            └── last.pt    # 最終モデル
+            ├── best.pt     # 最良モデル
+            └── last.pt     # 最終モデル
 ```
+
+## リアルタイム検出アプリ（camera_app.py）
+
+学習済みモデルを使用してカメラ映像をリアルタイムに物体検出します。
+
+```bash
+uv run python camera_app.py
+```
+
+- 学習済みモデル（`.pt` ファイル）をアプリ内で選択
+- 信頼度しきい値をスライダーで調整
+- 検出結果が正常状態から外れると異常アラートを表示
 
 ## data.yaml の形式
 
